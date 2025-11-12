@@ -1,8 +1,21 @@
 {
-  "functions": {
-    "source": "lib",
-    "runtime": "nodejs22"
-  },
+  "functions": [
+    {
+      "codebase": "default",
+      "source": "lib",
+      "runtime": "nodejs22",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
   "emulators": {
     "functions": {
       "port": 5001
@@ -28,4 +41,4 @@
       }
     ]
   }
-} 
+}

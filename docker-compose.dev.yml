@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  n8n-md-to-docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: n8n-md-to-docs-dev
+    ports:
+      - "5001:5001"  # Firebase Functions emulator
+      - "4000:4000"  # Firebase UI emulator
+    volumes:
+      # Mount source code for hot reload during development
+      - ./src:/app/src
+      - ./firebase.json:/app/firebase.json
+      - ./.firebaserc:/app/.firebaserc
+      - ./tsconfig.json:/app/tsconfig.json
+      # Mount build output
+      - ./lib:/app/lib
+      # Mount Firebase config and credentials
+      - ./.firebase:/app/.firebase
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      - NODE_ENV=development
+      - FIREBASE_PROJECT=md2doc-n8n-aemalsayer-docs
+    working_dir: /app
+    command: sh -c "bun run build:watch & bun run serve"
+    # Keep container running for debugging
+    stdin_open: true
+    tty: true

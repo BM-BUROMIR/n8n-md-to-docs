@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  md2doc-converter:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: md2doc-converter
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - md2doc-network
+
+networks:
+  md2doc-network:
+    driver: bridge

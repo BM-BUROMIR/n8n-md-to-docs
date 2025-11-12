@@ -1,0 +1,20 @@
+{
+  "name": "markdown-to-gdocs-function",
+  "version": "1.0.0",
+  "description": "Firebase Function to convert Markdown to Google Docs",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@hungknguyen/docx-math-converter": "^1.1.4",
+    "cors": "^2.8.5",
+    "docx": "^8.5.0",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.11.0",
+    "firebase-functions": "^4.5.0",
+    "googleapis": "^128.0.0",
+    "marked": "^11.1.0"
+  },
+  "private": true
+}
