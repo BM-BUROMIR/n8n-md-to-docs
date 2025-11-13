@@ -5,14 +5,16 @@ import { convertMarkdownToDocx } from './docxConverter';
 import { Readable } from 'stream';
 
 export async function convertMarkdownToGoogleDoc(
-  markdownContent: string, 
-  accessToken: string, 
-  fileName: string = 'Converted from Markdown'
+  markdownContent: string,
+  accessToken: string,
+  fileName: string = 'Converted from Markdown',
+  folderId?: string
 ): Promise<GoogleDocResponse> {
   try {
-    logger.info('Starting markdown to Google Doc conversion', { 
+    logger.info('Starting markdown to Google Doc conversion', {
       markdownLength: markdownContent.length,
       fileName,
+      folderId: folderId || 'root (default)',
       sampleMarkdown: markdownContent.substring(0, 100) // Log sample of markdown for debugging
     });
     
@@ -56,10 +58,18 @@ export async function convertMarkdownToGoogleDoc(
     const stream = Readable.from(docxBuffer);
 
     // Upload the docx file to Google Drive
-    const fileMetadata = {
+    const fileMetadata: any = {
       name: fileName,
       mimeType: 'application/vnd.google-apps.document' // This converts to Google Docs format
     };
+
+    // Add parent folder if specified
+    if (folderId) {
+      fileMetadata.parents = [folderId];
+      logger.info('Document will be created in folder', { folderId });
+    } else {
+      logger.info('Document will be created in root folder');
+    }
 
     const media = {
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -70,7 +80,7 @@ export async function convertMarkdownToGoogleDoc(
       const response = await drive.files.create({
         requestBody: fileMetadata,
         media: media,
-        fields: 'id'
+        fields: 'id,parents'
       });
 
       const documentId = response.data.id;
@@ -78,11 +88,15 @@ export async function convertMarkdownToGoogleDoc(
         throw new Error('Failed to create document: No document ID returned');
       }
 
+      // Get the actual parent folder ID from the response
+      const actualFolderId = folderId || (response.data.parents && response.data.parents.length > 0 ? response.data.parents[0] : undefined);
+
       const documentUrl = `https://docs.google.com/document/d/${documentId}`;
-      logger.info('Document created successfully', { 
-        documentId, 
-        documentUrl, 
-        fileName 
+      logger.info('Document created successfully', {
+        documentId,
+        documentUrl,
+        fileName,
+        actualFolderId
       });
 
       // Optionally get the document content to verify it's not empty
@@ -91,15 +105,15 @@ export async function convertMarkdownToGoogleDoc(
           fileId: documentId,
           fields: 'id,name,mimeType,size'
         });
-        
+
         logger.info('Document verification', {
           name: docResult.data.name,
           mimeType: docResult.data.mimeType,
           size: docResult.data.size
         });
       } catch (docError) {
-        logger.warn('Could not verify document content (not critical)', { 
-          error: docError instanceof Error ? docError.message : 'Unknown error' 
+        logger.warn('Could not verify document content (not critical)', {
+          error: docError instanceof Error ? docError.message : 'Unknown error'
         });
       }
 
@@ -107,7 +121,8 @@ export async function convertMarkdownToGoogleDoc(
         documentId,
         url: documentUrl,
         status: 200,
-        fileName
+        fileName,
+        folderId: actualFolderId
       };
     } catch (driveError: any) {
       logger.error('Error in Google Drive API:', {

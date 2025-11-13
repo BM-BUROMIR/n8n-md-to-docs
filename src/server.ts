@@ -37,12 +37,14 @@ app.post('/', async (req: Request, res: Response) => {
       const markdownContent = request.output;
       const authHeader = req.headers.authorization;
       const fileName = request.fileName || 'Converted from Markdown';
+      const folderId = request.folderId;
 
       console.log(`Request ${index + 1} validation:`, {
         hasMarkdown: !!markdownContent,
         contentLength: markdownContent?.length,
         hasAuthHeader: !!authHeader,
-        fileName
+        fileName,
+        folderId: folderId || 'root (default)'
       });
 
       // Validate markdown content
@@ -71,7 +73,7 @@ app.post('/', async (req: Request, res: Response) => {
 
       try {
         console.log(`Request ${index + 1}: Starting conversion for "${fileName}"`);
-        const result = await convertMarkdownToGoogleDoc(markdownContent, accessToken, fileName);
+        const result = await convertMarkdownToGoogleDoc(markdownContent, accessToken, fileName, folderId);
         console.log(`Request ${index + 1}: Conversion successful:`, result);
 
         return {
